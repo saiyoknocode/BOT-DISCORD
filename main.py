@@ -46,7 +46,7 @@ DM_MESSAGES = {
     "yok1_24h": "Salut ! N'oublie pas de regarder ta première vidéo et de valider ton round dans le salon Portes d'entrée pour débloquer Yók Thîi 2 et continuer ton accompagnement ! 💥",
     "yok2_24h": "Hey ! Tu peux maintenant débloquer Yók Thîi 3 ! Valide le salon No Pain No Muay pour continuer ta progression 💪",
     "yok3_24h": "🔥 Tu as super bien avancé ! Valide Yók Thîi 3 et accéder à la suite !",
-    "post_yok4_24h": "Salut ! Je vois que tu prends au sérieux ton projet de séjour en Thaïlande. Afin de mieux t'accompagner au mieux, je te propose de réserver un appel gratuit avec moi ici : https://yokacademy.fr/rdv-saiyok 💪 On pourra discuter de tes objectifs, de ton budget, de tes difficultés et trouver des solutions ensemble !",
+    "post_yok4_24h": "Salut ! Je vois que tu prends au sérieux ton projet de séjour en Thaïlande. Afin de t'accompagner au mieux, je te propose de réserver un appel gratuit avec moi ici : https://yokacademy.fr/rdv-saiyok 💪 On pourra discuter de tes objectifs, de ton budget, de tes difficultés et trouver des solutions ensemble !",
     "post_yok4_48h": "Jette un œil à ça, un abonné s'est rendu en Thaïlande sans avoir jamais boxé et a décroché un combat au bout de quelques jours ! Une interview inspirante : https://yokacademy.fr/itw-abo 🙏"
 }
 
