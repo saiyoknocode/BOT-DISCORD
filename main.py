@@ -20,8 +20,9 @@ ROLE_YOK5 = 1390647923288834110
 
 CHANNEL_PROGRESS = 1389939258676088953
 CHANNEL_BONUS = 1390648831234015352
-COLOR_ORANGE = 0xfd9f05
+LOG_CHANNEL_ID = 1356684226384101467  # Salon log DMs
 
+COLOR_ORANGE = 0xfd9f05
 TIMESTAMP_FILE = "role_timestamps.json"
 
 DELAY_STEPS = [
@@ -42,11 +43,11 @@ DELAY_STEPS = [
 ]
 
 DM_MESSAGES = {
-    "yok1_24h": "Salut ! N'oublie pas de valider ta première quête dans <#1356633471665180802> pour débloquer le rôle Yok 2 et commencer ton accompagnement ! 💥",
-    "yok2_24h": "Hey ! Tu peux maintenant débloquer la prépa physique (Yok 3) ! Valide le salon suivant pour continuer ta progression 💪",
-    "yok3_24h": "🔥 Tu es proche de la fin ! Valide la suite pour débloquer Yok 4 et accéder à la VSL gratuite de la Yok Academy !",
-    "post_yok4_24h": "Salut ! Je vois que tu prends au sérieux ton projet de séjour en Thaïlande. Je te propose de réserver un appel avec moi ici : https://yokacademy.fr/rdv-saiyok 💪",
-    "post_yok4_48h": "Jette un œil à cette interview inspirante : https://yokacademy.fr/itw-charlotte 🙏"
+    "yok1_24h": "Salut ! N'oublie pas de regarder ta première vidéo et de valider ton round dans le salon Portes d'entrée pour débloquer Yók Thîi 2 et continuer ton accompagnement ! 💥",
+    "yok2_24h": "Hey ! Tu peux maintenant débloquer Yók Thîi 3 ! Valide le salon No Pain No Muay pour continuer ta progression 💪",
+    "yok3_24h": "🔥 Tu as super bien avancé ! Valide Yók Thîi 3 et accéder à la suite !",
+    "post_yok4_24h": "Salut ! Je vois que tu prends au sérieux ton projet de séjour en Thaïlande. Afin de mieux t'accompagner au mieux, je te propose de réserver un appel gratuit avec moi ici : https://yokacademy.fr/rdv-saiyok 💪 On pourra discuter de tes objectifs, de ton budget, de tes difficultés et trouver des solutions ensemble !",
+    "post_yok4_48h": "Jette un œil à ça, un abonné s'est rendu en Thaïlande sans avoir jamais boxé et a décroché un combat au bout de quelques jours ! Une interview inspirante : https://yokacademy.fr/itw-abo 🙏"
 }
 
 # === UTIL ===
@@ -59,6 +60,22 @@ def load_timestamps():
 def save_timestamps(data):
     with open(TIMESTAMP_FILE, "w") as f:
         json.dump(data, f)
+
+async def send_dm_safe(member, message, context=""):
+    log_channel = bot.get_channel(LOG_CHANNEL_ID)
+    try:
+        await member.send(message)
+        if log_channel:
+            await log_channel.send(f"✅ DM envoyé à {member.mention} pour **{context}**")
+        return True
+    except discord.Forbidden:
+        if log_channel:
+            await log_channel.send(f"❌ DM refusé par {member.mention} pour **{context}** (DM désactivé ?)")
+        return False
+    except Exception as e:
+        if log_channel:
+            await log_channel.send(f"⚠️ Erreur DM {member.mention} ({context}) : `{e}`")
+        return False
 
 # === EVENTS ===
 @bot.event
@@ -117,52 +134,45 @@ async def check_relances():
             try:
                 # Yok2 - DM 24h après arrivée
                 if ROLE_YOK2 not in roles and timedelta(hours=24) <= now - joined < timedelta(hours=48):
-                    await member.send(DM_MESSAGES["yok1_24h"])
+                    await send_dm_safe(member, DM_MESSAGES["yok1_24h"], context="yok1_24h")
 
                 # Yok3 - DM 24h après rôle Yok2
                 elif ROLE_YOK2 in roles and ROLE_YOK3 not in roles:
                     if uid in timestamps and "yok2" in timestamps[uid]:
                         r_time = datetime.fromisoformat(timestamps[uid]["yok2"])
                         if timedelta(hours=24) <= now - r_time < timedelta(hours=48):
-                            await member.send(DM_MESSAGES["yok2_24h"])
+                            await send_dm_safe(member, DM_MESSAGES["yok2_24h"], context="yok2_24h")
 
                 # Yok4 - DM 24h après rôle Yok3
                 elif ROLE_YOK3 in roles and ROLE_YOK4 not in roles:
                     if uid in timestamps and "yok3" in timestamps[uid]:
                         r_time = datetime.fromisoformat(timestamps[uid]["yok3"])
                         if timedelta(hours=24) <= now - r_time < timedelta(hours=48):
-                            await member.send(DM_MESSAGES["yok3_24h"])
+                            await send_dm_safe(member, DM_MESSAGES["yok3_24h"], context="yok3_24h")
 
                 # Premium - DM 24h + 48h après rôle Yok4
                 elif ROLE_YOK4 in roles and ROLE_PREMIUM not in roles:
                     if uid in timestamps and "yok4" in timestamps[uid]:
                         r_time = datetime.fromisoformat(timestamps[uid]["yok4"])
                         if timedelta(hours=24) <= now - r_time < timedelta(hours=48):
-                            await member.send(DM_MESSAGES["post_yok4_24h"])
+                            await send_dm_safe(member, DM_MESSAGES["post_yok4_24h"], context="post_yok4_24h")
                         elif timedelta(hours=48) <= now - r_time < timedelta(hours=72):
-                            await member.send(DM_MESSAGES["post_yok4_48h"])
+                            await send_dm_safe(member, DM_MESSAGES["post_yok4_48h"], context="post_yok4_48h")
 
-                # Ajout Yok5 + message bonus après 72h si pas Premium
+                # Ajout Yok5 après 72h si pas Premium (sans message bonus)
                 if ROLE_YOK4 in roles and ROLE_PREMIUM not in roles and ROLE_YOK5 not in roles:
                     if uid in timestamps and "yok4" in timestamps[uid]:
                         r_time = datetime.fromisoformat(timestamps[uid]["yok4"])
                         if now - r_time >= timedelta(hours=72):
                             await member.add_roles(discord.Object(id=ROLE_YOK5))
-                            bonus_channel = bot.get_channel(CHANNEL_BONUS)
-                            await bonus_channel.send(
-                                f"{member.mention} 👋 Voici 3 ressources exclusives pour booster ton projet Thaïlande :\n"
-                                f"📞 Réserve un appel : https://yokacademy.fr/rdv-saiyok\n"
-                                f"🎥 Interview Charlotte : https://yokacademy.fr/itw-charlotte\n"
-                                f"📰 Reçois mon journal : https://yokacademy.fr/newsletter",
-                                allowed_mentions=discord.AllowedMentions(users=True)
-                            )
+                            # Pas besoin d'envoyer de message ici, le salon bonus est déjà configuré avec l'embed.
 
                 # Relances publiques
                 progression_channel = bot.get_channel(CHANNEL_PROGRESS)
                 public_check = [
-                    (ROLE_YOK2, "yok2", "Yok 2", "⛩️・portes-d’entrée・🎥", ROLE_YOK3),
-                    (ROLE_YOK3, "yok3", "Yok 3", "💪・prépa-physique・🔥", ROLE_YOK4),
-                    (ROLE_YOK4, "yok4", "Yok 4", "🎯・mission-vsl・📹", ROLE_PREMIUM),
+                    (ROLE_YOK2, "yok2", "Yok 2", "<#1356633471665180802>", ROLE_YOK3),
+                    (ROLE_YOK3, "yok3", "Yok 3", "<#1386343269859987476>", ROLE_YOK4),
+                    (ROLE_YOK4, "yok4", "Yok 4", "<#1386343994287456428>", ROLE_PREMIUM),
                 ]
 
                 for role, key, objectif, salon, next_role in public_check:
@@ -171,7 +181,7 @@ async def check_relances():
                         for delay, label in DELAY_STEPS:
                             if abs((now - r_time - delay).total_seconds()) < 3600:
                                 await progression_channel.send(
-                                    f"{member.mention} N'oublie pas de valider ta progression dans {salon} pour obtenir le rôle **{objectif}** et continuer ton accompagnement ! 💪",
+                                    f"{member.mention} N'oublie pas de valider ta progression dans {salon} pour obtenir le niveau **{objectif}** et continuer ton accompagnement ! 💪",
                                     allowed_mentions=discord.AllowedMentions(users=True)
                                 )
                                 break
